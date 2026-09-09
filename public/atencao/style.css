@@ -307,3 +307,7 @@ select{background:rgba(255,255,255,.06);border:1px solid var(--card-brd);color:v
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none !important;transition:none !important}
 }
+
+/* evita sobreposição das matrizes no laboratório */
+.labgrid>div{overflow-x:auto;padding-bottom:4px}
+.labgrid .matrix{min-width:max-content}
