@@ -16,6 +16,36 @@
   --good:#38d996;
   --bad:#ff6b7f;
   --radius:14px;
+  --topbar-bg:rgba(8,12,28,.72);
+  --input-bg:rgba(255,255,255,.06);
+  --shadow-cyan:rgba(63,224,224,.5);
+  --panel-note:#e6f9ff;
+}
+
+[data-theme="light"]{
+  --bg:#f4f6fb;
+  --bg2:#eef1f8;
+  --card:rgba(255,255,255,.78);
+  --card-brd:rgba(76,125,255,.22);
+  --txt:#111827;
+  --muted:#4b5563;
+  --cyan:#0e7490;
+  --blue:#2563eb;
+  --violet:#7c3aed;
+  --good:#16a34a;
+  --bad:#dc2626;
+  --topbar-bg:rgba(255,255,255,.82);
+  --input-bg:#fff;
+  --shadow-cyan:rgba(14,116,144,.35);
+  --panel-note:#f0f9ff;
+}
+
+[data-theme="light"] body{
+  background:
+    radial-gradient(1100px 600px at 12% -8%, rgba(76,125,255,.14), transparent 60%),
+    radial-gradient(900px 500px at 92% 4%, rgba(160,107,255,.12), transparent 60%),
+    radial-gradient(700px 500px at 50% 110%, rgba(63,224,224,.08), transparent 60%),
+    var(--bg);
 }
 
 *{box-sizing:border-box}
@@ -38,7 +68,7 @@ body{
 .topbar{
   display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;
   padding:14px 22px;
-  background:rgba(8,12,28,.72);
+  background:var(--topbar-bg);
   backdrop-filter:blur(14px);
   border-bottom:1px solid var(--card-brd);
   position:sticky;top:0;z-index:40;
@@ -151,7 +181,7 @@ body{
 .matrix.accent{border-color:var(--cyan)}
 .matrix.accent td{color:var(--cyan)}
 .matrix input{
-  width:56px;background:rgba(255,255,255,.06);border:1px solid var(--card-brd);
+  width:56px;background:var(--input-bg);border:1px solid var(--card-brd);
   color:var(--txt);border-radius:6px;padding:3px 5px;text-align:right;
   font-family:inherit;font-size:.82rem;
 }
@@ -275,16 +305,16 @@ body{
 
 /* ---------- lab ---------- */
 .labgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:8px}
-#frase{flex:1;min-width:240px;background:rgba(255,255,255,.06);border:1px solid var(--card-brd);
+#frase{flex:1;min-width:240px;background:var(--input-bg);border:1px solid var(--card-brd);
   color:var(--txt);padding:9px 13px;border-radius:10px;font-size:.95rem}
 #frase:focus{outline:none;border-color:var(--cyan)}
-select{background:rgba(255,255,255,.06);border:1px solid var(--card-brd);color:var(--txt);
+select{background:var(--input-bg);border:1px solid var(--card-brd);color:var(--txt);
   padding:6px 10px;border-radius:9px;font-size:.85rem}
 
 /* ---------- toast ---------- */
 .toast{
   position:fixed;left:50%;bottom:26px;transform:translate(-50%,26px);
-  background:rgba(12,18,38,.96);border:1px solid var(--cyan);color:var(--cyan);
+  background:var(--bg2);border:1px solid var(--cyan);color:var(--cyan);
   padding:10px 20px;border-radius:11px;font-size:.86rem;opacity:0;pointer-events:none;transition:.3s;z-index:60;
 }
 .toast.show{opacity:1;transform:translate(-50%,0)}
@@ -311,3 +341,41 @@ select{background:rgba(255,255,255,.06);border:1px solid var(--card-brd);color:v
 /* evita sobreposição das matrizes no laboratório */
 .labgrid>div{overflow-x:auto;padding-bottom:4px}
 .labgrid .matrix{min-width:max-content}
+
+/* ---------- tema claro — ajustes específicos ---------- */
+[data-theme="light"] .token{
+  background:linear-gradient(135deg,rgba(37,99,235,.12),rgba(124,58,237,.12));
+  color:var(--txt);
+}
+[data-theme="light"] .embchip{
+  background:rgba(14,116,144,.08);
+  color:var(--cyan);
+  border-color:rgba(14,116,144,.25);
+}
+[data-theme="light"] .panel.note{
+  background:var(--panel-note);
+}
+[data-theme="light"] .opt{
+  background:var(--card);
+  color:var(--txt);
+}
+[data-theme="light"] .opt:hover{
+  background:rgba(124,58,237,.10);
+}
+[data-theme="light"] .matrix.mask td.allow{background:rgba(22,163,74,.14);color:#14532d}
+[data-theme="light"] .matrix.mask td.block{background:rgba(220,38,38,.12);color:#7f1d1d}
+[data-theme="light"] .btn.ghost.theme{background:rgba(124,58,237,.08)}
+[data-theme="light"] .btn.ghost.theme:hover{background:rgba(124,58,237,.18)}
+[data-theme="light"] .sidebar li.active{
+  color:var(--txt);
+  background:linear-gradient(90deg,rgba(37,99,235,.16),rgba(124,58,237,.12));
+}
+[data-theme="light"] .pipeline li.on{
+  text-shadow:0 0 8px var(--shadow-cyan);
+}
+[data-theme="light"] .progress{
+  background:rgba(17,24,39,.12);
+}
+[data-theme="light"] .progress>div{
+  background:linear-gradient(90deg,var(--cyan),var(--blue),var(--violet));
+}
