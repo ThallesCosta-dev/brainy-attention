@@ -314,7 +314,7 @@ select{background:var(--input-bg);border:1px solid var(--card-brd);color:var(--t
 /* ---------- toast ---------- */
 .toast{
   position:fixed;left:50%;bottom:26px;transform:translate(-50%,26px);
-  background:rgba(12,18,38,.96);border:1px solid var(--cyan);color:var(--cyan);
+  background:var(--bg2);border:1px solid var(--cyan);color:var(--cyan);
   padding:10px 20px;border-radius:11px;font-size:.86rem;opacity:0;pointer-events:none;transition:.3s;z-index:60;
 }
 .toast.show{opacity:1;transform:translate(-50%,0)}
