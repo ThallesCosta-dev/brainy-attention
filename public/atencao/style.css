@@ -68,7 +68,7 @@ body{
 .topbar{
   display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;
   padding:14px 22px;
-  background:rgba(8,12,28,.72);
+  background:var(--topbar-bg);
   backdrop-filter:blur(14px);
   border-bottom:1px solid var(--card-brd);
   position:sticky;top:0;z-index:40;
