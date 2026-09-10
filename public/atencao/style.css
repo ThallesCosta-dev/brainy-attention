@@ -305,10 +305,10 @@ body{
 
 /* ---------- lab ---------- */
 .labgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:8px}
-#frase{flex:1;min-width:240px;background:rgba(255,255,255,.06);border:1px solid var(--card-brd);
+#frase{flex:1;min-width:240px;background:var(--input-bg);border:1px solid var(--card-brd);
   color:var(--txt);padding:9px 13px;border-radius:10px;font-size:.95rem}
 #frase:focus{outline:none;border-color:var(--cyan)}
-select{background:rgba(255,255,255,.06);border:1px solid var(--card-brd);color:var(--txt);
+select{background:var(--input-bg);border:1px solid var(--card-brd);color:var(--txt);
   padding:6px 10px;border-radius:9px;font-size:.85rem}
 
 /* ---------- toast ---------- */
