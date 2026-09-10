@@ -758,10 +758,34 @@ function wireControls() {
   $("#frase").addEventListener("keydown", (e) => e.key === "Enter" && run());
 }
 
-/* ---------- 10. BOOT ---------- */
+/* ---------- 10. TEMA CLARO/ESCURO ---------- */
+
+function initTheme() {
+  const root = document.documentElement;
+  const saved = localStorage.getItem("attention-theme");
+  const prefersLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
+  const theme = saved || (prefersLight ? "light" : "dark");
+  root.setAttribute("data-theme", theme);
+  updateThemeIcon(theme);
+
+  $("#btnTheme").addEventListener("click", () => {
+    const current = root.getAttribute("data-theme") === "light" ? "dark" : "light";
+    root.setAttribute("data-theme", current);
+    localStorage.setItem("attention-theme", current);
+    updateThemeIcon(current);
+  });
+}
+
+function updateThemeIcon(theme) {
+  $("#themeIcon").textContent = theme === "light" ? "☀️" : "🌙";
+  $("#btnTheme").setAttribute("aria-label", theme === "light" ? "Mudar para tema escuro" : "Mudar para tema claro");
+}
+
+/* ---------- 11. BOOT ---------- */
 
 buildNav();
 wireControls();
 wireChoiceExercises();
+initTheme();
 recompute();
 animateStep(1);
