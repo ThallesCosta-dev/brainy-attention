@@ -341,3 +341,41 @@ select{background:var(--input-bg);border:1px solid var(--card-brd);color:var(--t
 /* evita sobreposição das matrizes no laboratório */
 .labgrid>div{overflow-x:auto;padding-bottom:4px}
 .labgrid .matrix{min-width:max-content}
+
+/* ---------- tema claro — ajustes específicos ---------- */
+[data-theme="light"] .token{
+  background:linear-gradient(135deg,rgba(37,99,235,.12),rgba(124,58,237,.12));
+  color:var(--txt);
+}
+[data-theme="light"] .embchip{
+  background:rgba(14,116,144,.08);
+  color:var(--cyan);
+  border-color:rgba(14,116,144,.25);
+}
+[data-theme="light"] .panel.note{
+  background:var(--panel-note);
+}
+[data-theme="light"] .opt{
+  background:var(--card);
+  color:var(--txt);
+}
+[data-theme="light"] .opt:hover{
+  background:rgba(124,58,237,.10);
+}
+[data-theme="light"] .matrix.mask td.allow{background:rgba(22,163,74,.14);color:#14532d}
+[data-theme="light"] .matrix.mask td.block{background:rgba(220,38,38,.12);color:#7f1d1d}
+[data-theme="light"] .btn.ghost.theme{background:rgba(124,58,237,.08)}
+[data-theme="light"] .btn.ghost.theme:hover{background:rgba(124,58,237,.18)}
+[data-theme="light"] .sidebar li.active{
+  color:var(--txt);
+  background:linear-gradient(90deg,rgba(37,99,235,.16),rgba(124,58,237,.12));
+}
+[data-theme="light"] .pipeline li.on{
+  text-shadow:0 0 8px var(--shadow-cyan);
+}
+[data-theme="light"] .progress{
+  background:rgba(17,24,39,.12);
+}
+[data-theme="light"] .progress>div{
+  background:linear-gradient(90deg,var(--cyan),var(--blue),var(--violet));
+}
