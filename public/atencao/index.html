@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Como funciona o mecanismo de atenção — laboratório interativo</title>
-<meta name="description" content="Aprenda Self-Attention passo a passo: tokens, embeddings, Q/K/V, QKᵀ, scaling, softmax, pesos de atenção e soma ponderada, com matrizes editáveis e animações." />
+<meta name="description" content="Aprenda Self-Attention passo a passo: tokens, embeddings, positional encoding, Q/K/V, QKᵀ, scaling, softmax, pesos de atenção e soma ponderada, com matrizes editáveis e animações." />
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -37,7 +37,7 @@
 
 <div class="progresswrap">
   <div class="progress"><div id="progressBar"></div></div>
-  <div id="progressLabel" class="progresslabel">Etapa 1 de 12</div>
+  <div id="progressLabel" class="progresslabel">Etapa 1 de 13</div>
 </div>
 
 <div class="layout">
@@ -48,6 +48,7 @@
       <ul id="pipeline">
         <li data-stage="tokens">Tokens</li>
         <li data-stage="emb">Embeddings</li>
+        <li data-stage="pos">Positional encoding</li>
         <li data-stage="qkv">Q / K / V</li>
         <li data-stage="scores">QKᵀ</li>
         <li data-stage="scale">Scaling ÷√d<sub>k</sub></li>
@@ -65,10 +66,10 @@
     <!-- ═══════════ MÓDULO 1 ═══════════ -->
     <section class="module" data-stage="tokens" id="m1">
       <h2><span class="num">1</span> O problema</h2>
-      <p class="lead">Um modelo de linguagem precisa representar cada palavra <em>levando em conta as outras palavras</em> da frase. A palavra “bebeu” só faz sentido pleno perto de “gato” e “leite”.</p>
+      <p class="lead">Um modelo de linguagem precisa representar cada palavra <em>levando em conta as outras palavras</em> da frase. A palavra “comeu” só faz sentido pleno perto de “anta” e “banana”.</p>
 
       <div class="card">
-        <p class="frase">“<span id="fraseM1">o gato bebeu leite</span>”</p>
+        <p class="frase">“<span id="fraseM1">A Anta comeu banana</span>”</p>
         <div id="tokensM1" class="tokenrow"></div>
         <p class="hint">Cada token recebe uma representação numérica chamada <strong>embedding</strong> — um vetor de números.</p>
         <div id="tokenArrows" class="tokenrow arrows"></div>
@@ -108,32 +109,60 @@
     </section>
 
     <!-- ═══════════ MÓDULO 3 ═══════════ -->
-    <section class="module" data-stage="qkv" id="m3">
-      <h2><span class="num">3</span> Query, Key e Value</h2>
-      <p class="lead">Três <strong>projeções lineares</strong> da mesma matriz X. São só multiplicações de matrizes com pesos aprendidos.</p>
+    <section class="module" data-stage="pos" id="m3">
+      <h2><span class="num">3</span> Positional Encoding</h2>
+      <p class="lead">Depois do embedding, o modelo soma uma informação de posição. Ela começa na saída de X e termina na matriz X + PE, que segue para Query, Key e Value.</p>
 
       <div class="formulas">
-        <div class="fx">Q = X·W<sub>Q</sub></div>
-        <div class="fx">K = X·W<sub>K</sub></div>
-        <div class="fx">V = X·W<sub>V</sub></div>
+        <div class="fx">PE(pos, 2i) = sen(pos / 10000<sup>2i/d</sup>)</div>
+        <div class="fx">PE(pos, 2i+1) = cos(pos / 10000<sup>2i/d</sup>)</div>
+      </div>
+
+      <div class="card">
+        <div class="posbadge start">Começa aqui: embeddings X</div>
+        <div class="posflow">
+          <div><div class="matlabel">X</div><div id="matPosX" class="matrix"></div></div>
+          <div class="eqsym">+</div>
+          <div><div class="matlabel">PE — seno e cosseno por posição</div><div id="matPE" class="matrix"></div></div>
+          <div class="eqsym">=</div>
+          <div><div class="matlabel">X + PE</div><div id="matXPos" class="matrix accent"></div></div>
+        </div>
+        <div class="posbadge end">Termina aqui: entrada das projeções Q/K/V</div>
+      </div>
+
+      <div class="why">
+        <div class="panel"><h4>Por que isso é necessário?</h4><p>A atenção compara tokens, mas os embeddings sozinhos não dizem se “anta” veio antes de “banana”. O positional encoding injeta a ordem na sequência.</p></div>
+        <div class="panel"><h4>O que está acontecendo matematicamente?</h4><p>Para cada posição <span class="m">pos</span> e dimensão <span class="m">i</span>, calculamos ondas de seno e cosseno em frequências diferentes e somamos esse vetor ao embedding do token.</p></div>
+      </div>
+    </section>
+
+    <!-- ═══════════ MÓDULO 4 ═══════════ -->
+    <section class="module" data-stage="qkv" id="m4">
+      <h2><span class="num">4</span> Query, Key e Value</h2>
+      <p class="lead">Três <strong>projeções lineares</strong> da matriz X + PE. São só multiplicações de matrizes com pesos aprendidos.</p>
+
+      <div class="formulas">
+        <div class="fx">Q = (X + PE)·W<sub>Q</sub></div>
+        <div class="fx">K = (X + PE)·W<sub>K</sub></div>
+        <div class="fx">V = (X + PE)·W<sub>V</sub></div>
       </div>
 
       <div class="qkvflow">
         <div class="qkvcol">
           <div class="matlabel">W<sub>Q</sub> (editável)</div><div id="matWQ" class="matrix editable small"></div>
-          <div class="flowarrow">↓ X · W<sub>Q</sub></div>
+          <div class="flowarrow">↓ (X + PE) · W<sub>Q</sub></div>
           <div class="matlabel">Q</div><div id="matQ" class="matrix"></div>
           <p class="intuition"><strong>Query:</strong> “o que este token está procurando?”</p>
         </div>
         <div class="qkvcol">
           <div class="matlabel">W<sub>K</sub> (editável)</div><div id="matWK" class="matrix editable small"></div>
-          <div class="flowarrow">↓ X · W<sub>K</sub></div>
+          <div class="flowarrow">↓ (X + PE) · W<sub>K</sub></div>
           <div class="matlabel">K</div><div id="matK" class="matrix"></div>
           <p class="intuition"><strong>Key:</strong> “que tipo de informação eu ofereço?”</p>
         </div>
         <div class="qkvcol">
           <div class="matlabel">W<sub>V</sub> (editável)</div><div id="matWV" class="matrix editable small"></div>
-          <div class="flowarrow">↓ X · W<sub>V</sub></div>
+          <div class="flowarrow">↓ (X + PE) · W<sub>V</sub></div>
           <div class="matlabel">V</div><div id="matV" class="matrix"></div>
           <p class="intuition"><strong>Value:</strong> “qual conteúdo eu transmito?”</p>
         </div>
@@ -141,7 +170,7 @@
 
       <div class="why">
         <div class="panel"><h4>Por que isso é necessário?</h4><p>Um mesmo token precisa de papéis diferentes: quem pergunta, quem se anuncia e quem entrega conteúdo. Três matrizes de pesos dão esses três papéis.</p></div>
-        <div class="panel"><h4>O que está acontecendo matematicamente?</h4><p>Multiplicação de matrizes: o elemento <span class="m">Q[i][j]</span> é o produto escalar da linha <span class="m">i</span> de X com a coluna <span class="m">j</span> de W<sub>Q</sub>. Nada de não-linearidade aqui — são projeções lineares.</p></div>
+        <div class="panel"><h4>O que está acontecendo matematicamente?</h4><p>Multiplicação de matrizes: o elemento <span class="m">Q[i][j]</span> é o produto escalar da linha <span class="m">i</span> de X + PE com a coluna <span class="m">j</span> de W<sub>Q</sub>. Nada de não-linearidade aqui — são projeções lineares.</p></div>
       </div>
 
       <div class="exercise" data-ex="1">
@@ -156,9 +185,9 @@
       </div>
     </section>
 
-    <!-- ═══════════ MÓDULO 4 ═══════════ -->
-    <section class="module" data-stage="scores" id="m4">
-      <h2><span class="num">4</span> Produto QKᵀ</h2>
+    <!-- ═══════════ MÓDULO 5 ═══════════ -->
+    <section class="module" data-stage="scores" id="m5">
+      <h2><span class="num">5</span> Produto QKᵀ</h2>
       <div class="formulas"><div class="fx">Scores = Q·Kᵀ</div></div>
       <p class="lead">Cada célula mede a <strong>compatibilidade</strong> entre a Query de um token (linha) e a Key de outro (coluna).</p>
 
@@ -180,9 +209,9 @@
       </div>
     </section>
 
-    <!-- ═══════════ MÓDULO 5 ═══════════ -->
-    <section class="module" data-stage="scale" id="m5">
-      <h2><span class="num">5</span> Scaling</h2>
+    <!-- ═══════════ MÓDULO 6 ═══════════ -->
+    <section class="module" data-stage="scale" id="m6">
+      <h2><span class="num">6</span> Scaling</h2>
       <div class="formulas"><div class="fx big">Attention(Q,K,V) = softmax( Q·Kᵀ ⁄ √d<sub>k</sub> ) · V</div></div>
       <p class="lead">Dividimos os scores por <span class="m">√d<sub>k</sub></span> para evitar valores grandes demais, que deixariam o softmax quase binário e travariam o aprendizado.</p>
 
@@ -214,9 +243,9 @@
       </div>
     </section>
 
-    <!-- ═══════════ MÓDULO 6 ═══════════ -->
-    <section class="module" data-stage="softmax" id="m6">
-      <h2><span class="num">6</span> Softmax</h2>
+    <!-- ═══════════ MÓDULO 7 ═══════════ -->
+    <section class="module" data-stage="softmax" id="m7">
+      <h2><span class="num">7</span> Softmax</h2>
       <div class="formulas"><div class="fx">softmax(x<sub>i</sub>) = e<sup>x<sub>i</sub></sup> ⁄ Σ<sub>j</sub> e<sup>x<sub>j</sub></sup></div></div>
       <p class="lead">O softmax transforma uma linha de scores em <strong>pesos positivos que somam 1</strong>.</p>
 
@@ -251,9 +280,9 @@
       </div>
     </section>
 
-    <!-- ═══════════ MÓDULO 7 ═══════════ -->
-    <section class="module" data-stage="weights" id="m7">
-      <h2><span class="num">7</span> Attention Weights</h2>
+    <!-- ═══════════ MÓDULO 8 ═══════════ -->
+    <section class="module" data-stage="weights" id="m8">
+      <h2><span class="num">8</span> Attention Weights</h2>
       <p class="lead">Cada linha responde: <strong>“para onde este token está olhando?”</strong> Clique numa linha para ver as conexões.</p>
 
       <div class="card twocol">
@@ -269,7 +298,7 @@
       </div>
 
       <div class="why">
-        <div class="panel"><h4>Por que isso é necessário?</h4><p>É aqui que “contexto” vira número: a linha do token “bebeu” mostra quanta informação ele puxa de cada outro token.</p></div>
+        <div class="panel"><h4>Por que isso é necessário?</h4><p>É aqui que “contexto” vira número: a linha do token “comeu” mostra quanta informação ele puxa de cada outro token.</p></div>
         <div class="panel"><h4>O que está acontecendo matematicamente?</h4><p><span class="m">A = softmax<sub>linha</sub>(Q·Kᵀ/√d<sub>k</sub>)</span>, com cada linha somando 1.</p></div>
       </div>
 
@@ -280,9 +309,9 @@
       </div>
     </section>
 
-    <!-- ═══════════ MÓDULO 8 ═══════════ -->
-    <section class="module" data-stage="sum" id="m8">
-      <h2><span class="num">8</span> Weighted Sum</h2>
+    <!-- ═══════════ MÓDULO 9 ═══════════ -->
+    <section class="module" data-stage="sum" id="m9">
+      <h2><span class="num">9</span> Weighted Sum</h2>
       <div class="formulas"><div class="fx">Output = A · V</div></div>
       <p class="lead">A saída de cada token é a soma dos vetores V de todos os tokens, cada um multiplicado pelo seu peso.</p>
 
@@ -296,31 +325,31 @@
       </div>
 
       <div class="why">
-        <div class="panel"><h4>Por que isso é necessário?</h4><p>O vetor final já não é só “bebeu”: ele carrega pedaços de “gato” e “leite” na proporção dos pesos.</p></div>
+        <div class="panel"><h4>Por que isso é necessário?</h4><p>O vetor final já não é só “comeu”: ele carrega pedaços de “anta” e “banana” na proporção dos pesos.</p></div>
         <div class="panel"><h4>O que está acontecendo matematicamente?</h4><p><span class="m">Out<sub>i</sub> = Σ<sub>j</sub> A[i][j]·V<sub>j</sub></span> — uma combinação convexa das linhas de V.</p></div>
       </div>
     </section>
 
-    <!-- ═══════════ MÓDULO 9 ═══════════ -->
-    <section class="module" data-stage="out" id="m9">
-      <h2><span class="num">9</span> A fórmula completa</h2>
+    <!-- ═══════════ MÓDULO 10 ═══════════ -->
+    <section class="module" data-stage="out" id="m10">
+      <h2><span class="num">10</span> A fórmula completa</h2>
       <p class="lead">Clique em cada parte para ir ao módulo correspondente.</p>
       <div class="buildup">
-        <div class="step" data-goto="4">Q·Kᵀ</div>
+        <div class="step" data-goto="5">Q·Kᵀ</div>
         <div class="down">↓</div>
-        <div class="step" data-goto="5">Q·Kᵀ ⁄ √d<sub>k</sub></div>
+        <div class="step" data-goto="6">Q·Kᵀ ⁄ √d<sub>k</sub></div>
         <div class="down">↓</div>
-        <div class="step" data-goto="6">softmax( Q·Kᵀ ⁄ √d<sub>k</sub> )</div>
+        <div class="step" data-goto="7">softmax( Q·Kᵀ ⁄ √d<sub>k</sub> )</div>
         <div class="down">↓</div>
-        <div class="step" data-goto="8">softmax( Q·Kᵀ ⁄ √d<sub>k</sub> )·V</div>
+        <div class="step" data-goto="9">softmax( Q·Kᵀ ⁄ √d<sub>k</sub> )·V</div>
         <div class="down">↓</div>
-        <div class="step final" data-goto="12">Attention(Q, K, V)</div>
+        <div class="step final" data-goto="13">Attention(Q, K, V)</div>
       </div>
     </section>
 
-    <!-- ═══════════ MÓDULO 10 ═══════════ -->
-    <section class="module" data-stage="mask" id="m10">
-      <h2><span class="num">10</span> Atenção causal</h2>
+    <!-- ═══════════ MÓDULO 11 ═══════════ -->
+    <section class="module" data-stage="mask" id="m11">
+      <h2><span class="num">11</span> Atenção causal</h2>
       <p class="lead">Em modelos que geram texto, um token <strong>não pode enxergar o futuro</strong>. Posições futuras recebem −∞ antes do softmax, o que zera o peso.</p>
 
       <div class="card">
@@ -339,9 +368,9 @@
       </div>
     </section>
 
-    <!-- ═══════════ MÓDULO 11 ═══════════ -->
-    <section class="module" data-stage="qkv" id="m11">
-      <h2><span class="num">11</span> Multi-Head Attention</h2>
+    <!-- ═══════════ MÓDULO 12 ═══════════ -->
+    <section class="module" data-stage="qkv" id="m12">
+      <h2><span class="num">12</span> Multi-Head Attention</h2>
       <p class="lead">Transformers rodam várias atenções em paralelo, cada uma com suas próprias projeções, e concatenam os resultados.</p>
 
       <div class="headflow">
@@ -354,20 +383,22 @@
       <p class="disclaimer">Os rótulos “sintática”, “semântica” e “posicional” são simplificações didáticas. Cabeças reais não se especializam necessariamente assim.</p>
     </section>
 
-    <!-- ═══════════ MÓDULO 12 ═══════════ -->
-    <section class="module" data-stage="out" id="m12">
-      <h2><span class="num">12</span> Simulação interativa</h2>
+    <!-- ═══════════ MÓDULO 13 ═══════════ -->
+    <section class="module" data-stage="out" id="m13">
+      <h2><span class="num">13</span> Simulação interativa</h2>
       <p class="lead">Escreva uma frase. Tudo é recalculado no navegador, do token ao vetor final.</p>
 
       <div class="card">
         <div class="row">
-          <input id="frase" type="text" value="o gato bebeu leite" maxlength="60" aria-label="Frase" />
+          <input id="frase" type="text" value="A Anta comeu banana" maxlength="60" aria-label="Frase" />
           <button class="btn primary small" id="btnRun">Recalcular</button>
           <label class="switch"><input type="checkbox" id="causal2" /> <span>máscara causal</span></label>
         </div>
         <div class="labgrid">
           <div><div class="matlabel">Tokens</div><div id="labTokens" class="tokenrow"></div></div>
           <div><div class="matlabel">X (embeddings)</div><div id="labX" class="matrix"></div></div>
+          <div><div class="matlabel">PE (seno/cosseno)</div><div id="labPE" class="matrix"></div></div>
+          <div><div class="matlabel">X + PE</div><div id="labXPos" class="matrix accent"></div></div>
           <div><div class="matlabel">Q</div><div id="labQ" class="matrix"></div></div>
           <div><div class="matlabel">K</div><div id="labK" class="matrix"></div></div>
           <div><div class="matlabel">V</div><div id="labV" class="matrix"></div></div>
@@ -381,7 +412,8 @@
       <div class="panel note">
         <h4>Precisão conceitual</h4>
         <ul>
-          <li>Q, K e V são <strong>projeções lineares</strong> de X.</li>
+          <li>Q, K e V são <strong>projeções lineares</strong> de X + PE.</li>
+          <li>O positional encoding soma seno e cosseno aos embeddings para informar a ordem dos tokens.</li>
           <li>Q·Kᵀ produz os scores de compatibilidade.</li>
           <li>√d<sub>k</sub> é o fator de scaling.</li>
           <li>Softmax converte scores em pesos que somam 1.</li>

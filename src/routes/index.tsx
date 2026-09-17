@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 const TITLE = "Mecanismo de Atenção — laboratório interativo";
 const DESC =
-  "Aprenda Self-Attention passo a passo: tokens, embeddings, Q/K/V, QKᵀ, scaling, softmax, pesos de atenção e soma ponderada, com matrizes editáveis e animações.";
+  "Aprenda Self-Attention passo a passo: tokens, embeddings, positional encoding, Q/K/V, QKᵀ, scaling, softmax, pesos de atenção e soma ponderada, com matrizes editáveis e animações.";
 
 export const Route = createFileRoute("/")({
   head: () => ({

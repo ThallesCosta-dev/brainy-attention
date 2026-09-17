@@ -77,11 +77,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "Mecanismo de Atenção — laboratório interativo" },
+      {
+        name: "description",
+        content:
+          "Laboratório educacional em português para aprender Self-Attention com embeddings, positional encoding, Q/K/V, softmax e pesos de atenção.",
+      },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "Mecanismo de Atenção — laboratório interativo" },
+      {
+        property: "og:description",
+        content:
+          "Aprenda Self-Attention passo a passo com matrizes editáveis, positional encoding e animações interativas.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },

@@ -222,6 +222,11 @@ body{
 .m{font-family:"Cambria Math",Georgia,serif;color:var(--cyan)}
 
 /* ---------- Q/K/V ---------- */
+.posflow{display:grid;grid-template-columns:minmax(210px,1fr) auto minmax(210px,1fr) auto minmax(210px,1fr);gap:14px;align-items:center;overflow-x:auto;padding:8px 0}
+.eqsym{color:var(--cyan);font-family:"Cambria Math",Georgia,serif;font-size:1.8rem;font-weight:700;text-align:center}
+.posbadge{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--card-brd);border-radius:999px;padding:6px 12px;font-size:.78rem;color:var(--txt);background:rgba(63,224,224,.08)}
+.posbadge.start{border-color:var(--blue)}
+.posbadge.end{border-color:var(--cyan);margin-top:10px}
 .qkvflow{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .qkvcol{background:var(--card);border:1px solid var(--card-brd);border-radius:var(--radius);padding:14px}
 .flowarrow{text-align:center;color:var(--cyan);margin:10px 0;font-size:.85rem;animation:flowpulse 2.4s ease-in-out infinite}
@@ -324,6 +329,8 @@ select{background:var(--input-bg);border:1px solid var(--card-brd);color:var(--t
   .layout{grid-template-columns:1fr}
   .sidebar{position:static}
   .sidebar ol{flex-direction:row;flex-wrap:wrap}
+  .posflow{grid-template-columns:1fr}
+  .eqsym{font-size:1.4rem}
   .qkvflow{grid-template-columns:1fr}
   .why{grid-template-columns:1fr}
   .twocol{grid-template-columns:1fr}
