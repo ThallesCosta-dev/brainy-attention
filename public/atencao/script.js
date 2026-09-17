@@ -4,7 +4,7 @@
 
    Organização:
      1) Utilidades de álgebra linear (transpose, matrixMultiply, dotProduct…)
-     2) Pipeline de atenção (calculateQKV, calculateScores, scaleScores,
+     2) Pipeline de atenção (positionalEncoding, calculateQKV, calculateScores, scaleScores,
         applyCausalMask, softmax, calculateAttention)
      3) Renderização (renderMatrix, renderHeatmap, …)
      4) Estado + recálculo reativo
@@ -63,11 +63,12 @@ function tokenize(sentence) {
     .replace(/[^\p{L}\p{N}\s]/gu, " ")
     .split(/\s+/)
     .filter(Boolean);
-  return t.length ? t.slice(0, 6) : ["o", "gato", "bebeu", "leite"];
+  return t.length ? t.slice(0, 6) : ["a", "anta", "comeu", "banana"];
 }
 
 /** Embeddings didáticos de 3 dimensões, estáveis para a mesma palavra. */
-const DEFAULT_SENTENCE = "o gato bebeu leite";
+const DEFAULT_SENTENCE = "A Anta comeu banana";
+const DEFAULT_SENTENCE_KEY = DEFAULT_SENTENCE.toLowerCase();
 const DEFAULT_X = [
   [0.2, 0.7, 0.1],
   [0.9, 0.1, 0.3],
@@ -76,13 +77,28 @@ const DEFAULT_X = [
 ];
 
 function createEmbeddings(tokens, sentence) {
-  if (sentence && sentence.trim().toLowerCase() === DEFAULT_SENTENCE) {
+  if (sentence && sentence.trim().toLowerCase() === DEFAULT_SENTENCE_KEY) {
     return DEFAULT_X.map((r) => r.slice());
   }
   return tokens.map((tk) => {
     const rnd = seededRandom(tk);
     return [0, 1, 2].map(() => Math.round(rnd() * 100) / 100);
   });
+}
+
+/** Positional encoding senoidal: PE(pos,2i)=sen(...), PE(pos,2i+1)=cos(...). */
+function createPositionalEncoding(rows, cols) {
+  return Array.from({ length: rows }, (_, pos) =>
+    Array.from({ length: cols }, (_, dim) => {
+      const exponent = (2 * Math.floor(dim / 2)) / cols;
+      const angle = pos / Math.pow(10000, exponent);
+      return dim % 2 === 0 ? Math.sin(angle) : Math.cos(angle);
+    })
+  );
+}
+
+function addMatrices(A, B) {
+  return A.map((row, i) => row.map((v, j) => v + B[i][j]));
 }
 
 /** Projeções lineares Q = X·W_Q, K = X·W_K, V = X·W_V. */
@@ -120,13 +136,15 @@ function softmax(vec) {
 
 /** Pipeline completo: devolve todas as etapas intermediárias. */
 function calculateAttention(X, WQ, WK, WV, dk, causal) {
-  const { Q, K, V } = calculateQKV(X, WQ, WK, WV);
+  const PE = createPositionalEncoding(X.length, X[0].length);
+  const Xpos = addMatrices(X, PE);
+  const { Q, K, V } = calculateQKV(Xpos, WQ, WK, WV);
   const scores = calculateScores(Q, K);
   let scaled = scaleScores(scores, dk);
   const masked = causal ? applyCausalMask(scaled) : scaled;
   const weights = masked.map(softmax);
   const output = matrixMultiply(weights, V);
-  return { Q, K, V, scores, scaled, masked, weights, output };
+  return { PE, Xpos, Q, K, V, scores, scaled, masked, weights, output };
 }
 
 /* ---------- 3. ESTADO ---------- */
@@ -317,6 +335,13 @@ function renderModule2() {
       recompute({ skip: "matX" });
     },
   });
+}
+
+function renderModulePositional() {
+  const rl = { rowLabels: state.tokens, colLabels: ["d₁", "d₂", "d₃"] };
+  renderMatrix($("#matPosX"), state.X, rl);
+  renderMatrix($("#matPE"), R.PE, rl);
+  renderMatrix($("#matXPos"), R.Xpos, rl);
 }
 
 function renderModule3() {
@@ -522,6 +547,8 @@ function renderModule12() {
   const rl = { rowLabels: state.tokens };
   const sq = { rowLabels: state.tokens, colLabels: state.tokens };
   renderMatrix($("#labX"), state.X, rl);
+  renderMatrix($("#labPE"), R.PE, rl);
+  renderMatrix($("#labXPos"), R.Xpos, rl);
   renderMatrix($("#labQ"), R.Q, rl);
   renderMatrix($("#labK"), R.K, rl);
   renderMatrix($("#labV"), R.V, rl);
@@ -540,6 +567,7 @@ function recompute(opts = {}) {
 
   renderModule1();
   if (opts.skip !== "matX") renderModule2();
+  renderModulePositional();
   if (!String(opts.skip || "").startsWith("w")) renderModule3();
   else {
     const rl = { rowLabels: state.tokens };
@@ -562,6 +590,7 @@ function recompute(opts = {}) {
 const MODULE_TITLES = [
   "O problema",
   "Embeddings",
+  "Positional Encoding",
   "Query, Key e Value",
   "Produto QKᵀ",
   "Scaling",
