@@ -1,26 +1,38 @@
-# Attention Engine Explorer
+# Como funciona o mecanismo de atenção
 
-Crie o aplicativo educacional 'Como funciona o mecanismo de atenção' seguindo detalhadamente a estrutura pedagógica, os módulos explicativos, fórmulas, matrizes editáveis e animações passo a passo especificados no arquivo anexado.
+Laboratório interativo, em português, para aprender **Self-Attention** passo a passo: tokens → embeddings →
+positional encoding → Q/K/V → Q·Kᵀ → scaling → máscara causal → softmax → attention weights → weighted sum,
+com matrizes editáveis, heatmaps, exercícios e uma simulação livre. Toda a matemática roda no navegador.
 
-This project was built with [Lovable](https://lovable.dev).
+**App publicado**: https://brainy-attention.lovable.app
 
-**Live app**: https://brainy-attention.lovable.app
+## Estrutura
 
-## Build with Lovable
+| Caminho                     | O que é                                                                                               |
+| --------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `src/lib/attention.ts`      | Matemática pura (tokenização, PE senoidal, projeções, softmax, máscara). Sem DOM, coberta por testes. |
+| `src/components/attention/` | Os 13 módulos didáticos, o heatmap/matriz acessíveis e o estado do laboratório.                       |
+| `src/routes/index.tsx`      | Rota principal. `?modulo=N` abre uma etapa específica.                                                |
+| `src/attention.css`         | Estilos do laboratório (temas claro e escuro via `data-theme`).                                       |
+| `src/routes/__root.tsx`     | Casca TanStack Start: metadados, tema inicial, 404 e página de erro.                                  |
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/6356981f-547f-49ac-b9ff-2889a5799db7).
+## Desenvolvimento
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+O projeto usa [Bun](https://bun.sh) (o lockfile é `bun.lock`).
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+bun install
+bun run dev        # servidor de desenvolvimento
+bun run test       # testes da matemática (vitest)
+bun run typecheck  # tsc --noEmit
+bun run lint
+bun run build
 ```
+
+Sem o Bun instalado, `npx bun@latest install` funciona sem instalação global.
+
+## Lovable
+
+Este projeto está conectado ao [Lovable](https://lovable.dev/projects/6356981f-547f-49ac-b9ff-2889a5799db7).
+Commits enviados para `main` aparecem no editor, e mudanças feitas lá voltam para este repositório. Não
+reescreva histórico já publicado (force push, rebase, squash) para não perder o histórico do lado do Lovable.
