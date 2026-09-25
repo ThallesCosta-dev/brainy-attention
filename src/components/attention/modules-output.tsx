@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { MAX_TOKENS, argmax, calculateAttention, fmt, weightedSum } from "@/lib/attention";
+import { DIM, MAX_TOKENS, argmax, calculateAttention, fmt, weightedSum } from "@/lib/attention";
 import type { Matrix as MatrixData } from "@/lib/attention";
 
 import { Heatmap } from "./Heatmap";
@@ -39,7 +39,8 @@ export function WeightsModule({ state, R, actions, exercises }: ModuleProps) {
               const row = R.weights[last] ?? [];
               const best = argmax(row);
               actions.setExerciseResult(5, {
-                ok: i === last && j === best,
+                // Compara pelo valor para aceitar qualquer célula empatada com o máximo.
+                ok: i === last && row[j] === row[best],
                 msg: `"${tokens[last]}" olha mais para "${tokens[best]}" (${fmt(row[best] ?? 0)}).`,
               });
             }}
@@ -55,13 +56,15 @@ export function WeightsModule({ state, R, actions, exercises }: ModuleProps) {
       </div>
 
       <Why
-        why="É aqui que “contexto” vira número: a linha do token “comeu” mostra quanta informação ele puxa de cada outro token."
+        why="É aqui que “contexto” vira número: na frase padrão, a linha do token “comeu” mostra quanta informação ele puxa de cada token da frase, inclusive dele mesmo."
         math={
           <>
             <M>
               A = softmax<sub>linha</sub>(Q·Kᵀ/√d<sub>k</sub>)
-            </M>
-            , com cada linha somando 1.
+            </M>{" "}
+            (com a máscara somada antes do softmax, se estiver ativa), com cada linha somando 1. A
+            matriz não é simétrica: o quanto “anta” olha para “banana” não precisa ser igual ao
+            quanto “banana” olha para “anta”.
           </>
         }
       />
@@ -182,13 +185,15 @@ export function WeightedSumModule({ state, R, actions }: ModuleProps) {
       </div>
 
       <Why
-        why="O vetor final já não é só “comeu”: ele carrega pedaços de “anta” e “banana” na proporção dos pesos."
+        why="Na frase padrão, o vetor final de “comeu” já não é só “comeu”: ele carrega pedaços de “anta” e “banana” na proporção dos pesos."
         math={
           <>
             <M>
               Out<sub>i</sub> = Σ<sub>j</sub> A[i][j]·V<sub>j</sub>
             </M>{" "}
-            — uma combinação convexa das linhas de V.
+            — uma combinação convexa das linhas de V (pesos ≥ 0 que somam 1). Num Transformer
+            completo, essa saída ainda passa pela projeção W<sub>O</sub>, é somada à entrada
+            (conexão residual), normalizada e processada por uma rede feed-forward.
           </>
         }
       />
@@ -235,6 +240,14 @@ export function FormulaModule({ actions }: ModuleProps) {
         </Fx>
       </Formulas>
       <p className="lead">Clique em cada parte para ir ao módulo correspondente.</p>
+      <p className="hint">
+        Na atenção causal, a máscara <M>M</M> (0 nas posições permitidas, −∞ nas futuras) é somada
+        antes do softmax:{" "}
+        <M>
+          softmax( Q·Kᵀ ⁄ √d<sub>k</sub> + M )·V
+        </M>
+        .
+      </p>
       <div className="buildup">
         {BUILDUP.map((b, i) => (
           <div key={i} style={{ display: "contents" }}>
@@ -321,9 +334,21 @@ export function HeadsModule({ state }: ModuleProps) {
         </div>
         <div className="hnode final">Output</div>
       </div>
+      <p className="hint">
+        Num modelo real, cada cabeça tem suas próprias W<sub>Q</sub>, W<sub>K</sub> e W<sub>V</sub>,
+        que projetam para uma dimensão menor: com <M>h</M> cabeças,{" "}
+        <M>
+          d<sub>k</sub> = d<sub>modelo</sub> / h
+        </M>
+        . As saídas das <M>h</M> cabeças são concatenadas (voltando a d<sub>modelo</sub> colunas) e
+        multiplicadas por W<sub>O</sub>.
+      </p>
       <p className="disclaimer">
-        Os rótulos “sintática”, “semântica” e “posicional” são simplificações didáticas. Cabeças
-        reais não se especializam necessariamente assim.
+        Simplificação desta tela: as 4 cabeças são simuladas com pequenas variações das suas W
+        <sub>Q</sub> e W<sub>K</sub>, na dimensão cheia ({DIM}), e só os pesos de atenção são
+        mostrados; a concatenação e W<sub>O</sub> aparecem apenas no diagrama. Os rótulos
+        “sintática”, “semântica” e “de posição” também são didáticos: cabeças reais não se
+        especializam necessariamente assim.
       </p>
     </>
   );
@@ -428,8 +453,8 @@ export function LabModule({ state, R, actions }: ModuleProps) {
             Q, K e V são <strong>projeções lineares</strong> de X + PE.
           </li>
           <li>
-            O positional encoding soma seno e cosseno aos embeddings para informar a ordem dos
-            tokens.
+            O positional encoding senoidal (do Transformer original) soma seno e cosseno aos
+            embeddings para informar a ordem dos tokens.
           </li>
           <li>Q·Kᵀ produz os scores de compatibilidade.</li>
           <li>

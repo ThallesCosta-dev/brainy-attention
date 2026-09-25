@@ -170,11 +170,10 @@ describe("tokenização e embeddings", () => {
   });
 
   it("embeddings são estáveis por palavra e usam DEFAULT_X na frase padrão", () => {
-    expect(createEmbeddings(tokenize(DEFAULT_SENTENCE).tokens, DEFAULT_SENTENCE)).toEqual(
-      DEFAULT_X,
-    );
-    const a = createEmbeddings(["gato"], "gato");
-    const b = createEmbeddings(["gato"], "gato");
+    expect(createEmbeddings(tokenize(DEFAULT_SENTENCE).tokens)).toEqual(DEFAULT_X);
+    expect(createEmbeddings(tokenize("a anta comeu banana.").tokens)).toEqual(DEFAULT_X);
+    const a = createEmbeddings(["gato"]);
+    const b = createEmbeddings(["gato"]);
     expect(a).toEqual(b);
     expect(a[0]).toHaveLength(3);
   });

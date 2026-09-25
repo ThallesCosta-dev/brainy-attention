@@ -149,7 +149,7 @@ export function AttentionLab({ module, onModuleChange }: AttentionLabProps) {
       resetX: () =>
         setState((s) => ({
           ...s,
-          X: createEmbeddings(s.tokens, s.sentence),
+          X: createEmbeddings(s.tokens),
           matrixVersion: s.matrixVersion + 1,
         })),
       randomizeX: () =>
@@ -170,7 +170,7 @@ export function AttentionLab({ module, onModuleChange }: AttentionLabProps) {
           sentence,
           tokens,
           truncated,
-          X: createEmbeddings(tokens, sentence),
+          X: createEmbeddings(tokens),
           selectedRow: 0,
           demoSoftmax: false,
           matrixVersion: s.matrixVersion + 1,
