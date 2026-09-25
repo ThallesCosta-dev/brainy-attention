@@ -18,8 +18,9 @@ export function ProblemModule({ state }: ModuleProps) {
         <p className="frase">“{state.sentence}”</p>
         <TokenChips tokens={state.tokens} />
         <p className="hint">
-          Cada token recebe uma representação numérica chamada <strong>embedding</strong> — um vetor
-          de números.
+          Aqui, para simplificar, cada palavra vira um token. Modelos reais quebram o texto em
+          pedaços menores (subpalavras, por exemplo com BPE). Cada token recebe uma representação
+          numérica chamada <strong>embedding</strong> — um vetor de números.
         </p>
         <div className="tokenrow arrows" aria-hidden="true">
           {state.tokens.map((tk, i) => (
@@ -51,8 +52,9 @@ export function ProblemModule({ state }: ModuleProps) {
         math={
           <>
             Transformamos uma matriz <M>X</M> de <M>n</M> tokens × <M>d</M> dimensões em outra
-            matriz do mesmo formato, mas onde cada linha é uma <em>média ponderada</em> das linhas
-            originais.
+            matriz com uma linha por token, onde cada linha é uma <em>média ponderada</em> dos
+            vetores Value (<M>V</M>) — projeções dos tokens da frase, não os embeddings originais.
+            Os pesos dessa média vêm da comparação entre os tokens (Query × Key).
           </>
         }
       />
@@ -104,7 +106,10 @@ export function EmbeddingsModule({ state, actions }: ModuleProps) {
               X ∈ ℝ<sup>n×d</sup>
             </M>
             , com <M>n</M> = número de tokens e <M>d</M> = dimensão do modelo. Aqui <M>d = {DIM}</M>
-            , valor didático.
+            , valor didático. Num modelo real os embeddings são <em>aprendidos</em> no treino; neste
+            laboratório os números são fictícios (a frase padrão usa valores escolhidos à mão e as
+            outras palavras recebem valores pseudoaleatórios fixos), então “perto” aqui não indica
+            parentesco de significado.
           </>
         }
       />
@@ -119,7 +124,9 @@ export function PositionalModule({ state, R }: ModuleProps) {
     <>
       <p className="lead">
         Depois do embedding, o modelo soma uma informação de posição. Ela começa na saída de X e
-        termina na matriz X + PE, que segue para Query, Key e Value.
+        termina na matriz X + PE, que segue para Query, Key e Value. Este é o esquema do Transformer
+        original (Vaswani et al., 2017); muitos LLMs atuais usam outras formas de codificar posição,
+        como RoPE, que gira os vetores Q e K em vez de somar um vetor ao embedding.
       </p>
 
       <Formulas>
@@ -155,10 +162,15 @@ export function PositionalModule({ state, R }: ModuleProps) {
         </div>
         <div className="posbadge end">Termina aqui: entrada das projeções Q/K/V</div>
         <p className="hint">
+          As posições começam em 0: o primeiro token tem <M>pos = 0</M>, por isso sua linha de PE é
+          [0, 1, 0] (sen 0 = 0, cos 0 = 1).
+        </p>
+        <p className="hint">
           Por que a coluna <M>d₃</M> fica quase zero? Cada par de dimensões usa uma frequência menor
           que o anterior. Com <M>d = 3</M>, a terceira dimensão tem frequência 1/10000<sup>2/3</sup>{" "}
           ≈ 1/464: para posições pequenas, sen(pos/464) é praticamente 0. Ela só varia de forma
-          visível em sequências longas, com centenas de tokens.
+          visível em sequências longas, com centenas de tokens. (Com <M>d</M> ímpar, essa última
+          dimensão fica sem o cosseno correspondente; modelos reais usam <M>d</M> par.)
         </p>
       </div>
 
@@ -166,9 +178,11 @@ export function PositionalModule({ state, R }: ModuleProps) {
         why="A atenção compara tokens, mas os embeddings sozinhos não dizem se “anta” veio antes de “banana”. O positional encoding injeta a ordem na sequência."
         math={
           <>
-            Para cada posição <M>pos</M> e dimensão <M>i</M>, calculamos ondas de seno e cosseno em
-            frequências diferentes e somamos esse vetor ao embedding do token. Dimensões pares usam
-            seno, ímpares usam cosseno.
+            Para cada posição <M>pos</M>, calculamos ondas de seno e cosseno em frequências
+            diferentes e somamos esse vetor ao embedding do token. Na fórmula, <M>i</M> é o índice
+            do <em>par</em> de dimensões: o par <M>i</M> ocupa as dimensões <M>2i</M> (seno) e{" "}
+            <M>2i+1</M> (cosseno), contando a partir de 0. Com os rótulos da tabela, <M>d₁</M> e{" "}
+            <M>d₃</M> usam seno e <M>d₂</M> usa cosseno.
           </>
         }
       />
@@ -198,7 +212,8 @@ export function QKVModule({ state, R, actions, exercises }: ModuleProps) {
     <>
       <p className="lead">
         Três <strong>projeções lineares</strong> da matriz X + PE. São só multiplicações de matrizes
-        com pesos aprendidos.
+        por pesos que, num modelo real, são aprendidos no treino (aqui foram escolhidos à mão e você
+        pode editá-los).
       </p>
 
       <Formulas>
@@ -249,7 +264,7 @@ export function QKVModule({ state, R, actions, exercises }: ModuleProps) {
         id={1}
         question={
           <>
-            Se X tem formato n×{DIM} e W<sub>Q</sub> tem {DIM}×{DIM}, qual é o formato de Q?
+            Se X + PE tem formato n×{DIM} e W<sub>Q</sub> tem {DIM}×{DIM}, qual é o formato de Q?
           </>
         }
         options={[

@@ -96,7 +96,6 @@ export function seededRandom(seed: string): () => number {
 /* ---------- valores padrão ---------- */
 
 export const DEFAULT_SENTENCE = "A Anta comeu banana";
-const DEFAULT_SENTENCE_KEY = DEFAULT_SENTENCE.toLowerCase();
 
 export const DEFAULT_X: Matrix = [
   [0.2, 0.7, 0.1],
@@ -145,9 +144,14 @@ export function tokenize(sentence: string): TokenizeResult {
   return { tokens: all.slice(0, MAX_TOKENS), truncated: all.length > MAX_TOKENS };
 }
 
-/** Embeddings didáticos: estáveis para a mesma palavra; a frase padrão usa DEFAULT_X. */
-export function createEmbeddings(tokens: string[], sentence: string): Matrix {
-  if (sentence.trim().toLowerCase() === DEFAULT_SENTENCE_KEY) return cloneMatrix(DEFAULT_X);
+/**
+ * Embeddings didáticos: estáveis para a mesma palavra; a frase padrão usa DEFAULT_X.
+ * A comparação é pelos tokens, então "A anta comeu banana." também cai no padrão.
+ */
+export function createEmbeddings(tokens: string[]): Matrix {
+  const defaults = tokenize(DEFAULT_SENTENCE).tokens;
+  if (tokens.length === defaults.length && tokens.every((t, i) => t === defaults[i]))
+    return cloneMatrix(DEFAULT_X);
   return tokens.map((tk) => {
     const rnd = seededRandom(tk);
     return Array.from({ length: DIM }, () => Math.round(rnd() * 100) / 100);

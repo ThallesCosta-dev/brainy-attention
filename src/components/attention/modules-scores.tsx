@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { argmaxMatrix, causalMaskMatrix, fmt, softmax, softmaxExps } from "@/lib/attention";
+import { DIM, argmaxMatrix, causalMaskMatrix, fmt, softmax, softmaxExps } from "@/lib/attention";
 
 import { Heatmap } from "./Heatmap";
 import { Matrix } from "./Matrix";
@@ -19,7 +19,7 @@ export function ScoresModule({ state, R, actions, exercises }: ModuleProps) {
       </Formulas>
       <p className="lead">
         Cada célula mede a <strong>compatibilidade</strong> entre a Query de um token (linha) e a
-        Key de outro (coluna).
+        Key de um token (coluna) — inclusive dele mesmo, na diagonal.
       </p>
 
       <div className="card">
@@ -38,7 +38,8 @@ export function ScoresModule({ state, R, actions, exercises }: ModuleProps) {
             const [bi, bj] = argmaxMatrix(R.scores);
             const max = R.scores[bi]?.[bj] ?? 0;
             actions.setExerciseResult(2, {
-              ok: bi === i && bj === j,
+              // Compara pelo valor para aceitar qualquer célula empatada com o máximo.
+              ok: v === max,
               msg: `Maior score = ${fmt(max)}, em "${tokens[bi]}" × "${tokens[bj]}". Você clicou em ${fmt(v)}.`,
             });
           }}
@@ -49,13 +50,14 @@ export function ScoresModule({ state, R, actions, exercises }: ModuleProps) {
       </div>
 
       <Why
-        why="Precisamos de um número que diga “quanto o token A deve olhar para o token B”. O produto escalar faz isso: vetores apontando na mesma direção dão valores altos."
+        why="Precisamos de um número que diga “quanto o token A deve olhar para o token B”. O produto escalar faz isso: vetores longos apontando em direções parecidas dão valores altos; direções opostas dão valores negativos."
         math={
           <>
             <M>
               S[i][j] = Q<sub>i</sub> · K<sub>j</sub> = Σ<sub>c</sub> Q[i][c]·K[j][c]
             </M>
-            . O resultado é uma matriz quadrada n×n.
+            . O resultado é uma matriz quadrada n×n, que não precisa ser simétrica: Q e K vêm de
+            matrizes de pesos diferentes, então S[i][j] ≠ S[j][i] em geral.
           </>
         }
       />
@@ -89,8 +91,8 @@ export function ScalingModule({ state, R, actions, exercises }: ModuleProps) {
         <M>
           √d<sub>k</sub>
         </M>{" "}
-        para evitar valores grandes demais, que deixariam o softmax quase binário e travariam o
-        aprendizado.
+        para evitar valores grandes demais, que deixariam o softmax quase “tudo ou nada” (um peso
+        perto de 1 e os outros perto de 0) e travariam o aprendizado.
       </p>
 
       <div className="card">
@@ -113,6 +115,15 @@ export function ScalingModule({ state, R, actions, exercises }: ModuleProps) {
           divisão isoladamente. Num modelo real, um d<sub>k</sub> maior também faria os próprios
           scores brutos crescerem — e é justamente isso que a divisão compensa.
         </p>
+        {state.dk !== DIM && (
+          <p className="hint warn">
+            Atenção: o valor escolhido aqui vale para todas as etapas seguintes (softmax, pesos,
+            saída). Com d<sub>k</sub> ≠ {DIM}, elas deixam de mostrar o cálculo correto.{" "}
+            <button type="button" className="btn small" onClick={() => actions.setDk(DIM)}>
+              Voltar para d<sub>k</sub> = {DIM}
+            </button>
+          </p>
+        )}
         <div className="sidebyside">
           <div>
             <div className="matlabel">Q·Kᵀ (bruto)</div>
@@ -133,14 +144,16 @@ export function ScalingModule({ state, R, actions, exercises }: ModuleProps) {
       <Why
         why={
           <>
-            Com d<sub>k</sub> grande, o produto escalar soma muitos termos e cresce. Scores enormes
-            fazem o softmax devolver quase 1 e 0, e os gradientes somem.
+            Com d<sub>k</sub> grande, o produto escalar soma muitos termos e tende a ficar grande em
+            valor absoluto. Scores enormes fazem o softmax devolver quase 1 e 0, e os gradientes
+            ficam minúsculos.
           </>
         }
         math={
           <>
-            Se as entradas têm variância ~1, o produto escalar de d<sub>k</sub> termos tem variância
-            ~d<sub>k</sub>. Dividir por √d<sub>k</sub> devolve variância ~1.
+            Se as componentes de q e k são independentes, com média 0 e variância 1, o produto
+            escalar q·k (soma de d<sub>k</sub> termos) tem variância d<sub>k</sub>. Dividir por √d
+            <sub>k</sub> devolve variância 1.
           </>
         }
       />
@@ -154,8 +167,8 @@ export function ScalingModule({ state, R, actions, exercises }: ModuleProps) {
           </>
         }
         options={[
-          { label: "maiores", correct: false },
-          { label: "menores e mais próximos entre si", correct: true },
+          { label: "maiores em valor absoluto", correct: false },
+          { label: "mais próximos de zero e mais próximos entre si", correct: true },
           { label: "inalterados", correct: false },
         ]}
         exercises={exercises}
@@ -187,7 +200,7 @@ export function MaskModule({ state, R, actions }: ModuleProps) {
         </label>
         <p className="hint">
           {state.causal
-            ? "Máscara ativa: as duas matrizes da direita já refletem o bloqueio, e todos os outros módulos também."
+            ? "Máscara ativa: as duas matrizes da direita já refletem o bloqueio, assim como as etapas seguintes (softmax, pesos e saída). Os scores brutos e escalados não mudam, porque a máscara entra depois deles."
             : "Máscara desativada: a matriz da esquerda mostra o que seria bloqueado; as da direita ainda estão sem máscara."}
         </p>
         <div className="sidebyside">
@@ -217,14 +230,15 @@ export function MaskModule({ state, R, actions }: ModuleProps) {
       </div>
 
       <Why
-        why="Durante o treino o modelo vê a frase inteira. Sem máscara ele “colaria” a resposta olhando o próximo token."
+        why="No treino, o modelo aprende a prever o próximo token em cada posição, mas recebe a frase inteira de uma vez. Sem máscara ele “colaria” a resposta olhando o próximo token. Na geração, os tokens futuros nem existem ainda. (Modelos que só codificam texto, sem gerá-lo, como o BERT, não usam essa máscara: cada token vê a frase inteira.)"
         math={
           <>
             Somamos −∞ (na prática, um número muito negativo) onde <M>j &gt; i</M>. Como{" "}
             <M>
               e<sup>−∞</sup> = 0
-            </M>
-            , o peso vira 0.
+            </M>{" "}
+            (no limite), o peso vira 0. A diagonal nunca é mascarada: cada token sempre pode olhar
+            para si mesmo, então o primeiro token dá peso 1 a si próprio.
           </>
         }
       />
@@ -258,7 +272,9 @@ export function SoftmaxModule({ state, R, actions, exercises }: ModuleProps) {
         </Fx>
       </Formulas>
       <p className="lead">
-        O softmax transforma uma linha de scores em <strong>pesos positivos que somam 1</strong>.
+        O softmax transforma uma linha de scores em <strong>pesos entre 0 e 1 que somam 1</strong>.
+        Sem máscara, todos os pesos são positivos; posições mascaradas (−∞) recebem peso exatamente
+        0.
       </p>
 
       <div className="card">
@@ -327,7 +343,7 @@ export function SoftmaxModule({ state, R, actions, exercises }: ModuleProps) {
 
       <Why
         why="Queremos uma média ponderada. Para isso os pesos precisam ser não-negativos e somar 1 — exatamente o que o softmax garante."
-        math="A exponencial amplia diferenças e elimina negativos; a divisão pela soma normaliza. Somar uma constante a todos os x não muda o resultado — por isso subtraímos o máximo antes de exponenciar, só para evitar números gigantes."
+        math="A exponencial transforma qualquer número em positivo e amplia as diferenças; a divisão pela soma normaliza. Somar uma constante a todos os x não muda o resultado — por isso subtraímos o máximo antes de exponenciar, só para evitar números gigantes. Os pesos exibidos estão arredondados para 2 casas, então somá-los de cabeça pode dar 0.99 ou 1.01; a soma exata é sempre 1."
       />
 
       <ChoiceExercise
